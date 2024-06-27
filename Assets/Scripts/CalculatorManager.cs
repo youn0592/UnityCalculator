@@ -39,6 +39,7 @@ public class CalculatorManager : MonoBehaviour
     List<ECalcButton> OppList = new List<ECalcButton>();
 
     bool bBEDMAS = false;
+    int prevOpp = -1;
 
 
     // Start is called before the first frame update
@@ -118,64 +119,87 @@ public class CalculatorManager : MonoBehaviour
 
     void AdditionCalc()
     {
-        //Works, however needs to be changed, is current working on the upcoming calculation.
-        //Needs to be changed to have the previous number be added.
+        /*
+            Works, however needs to be changed, is current working on the upcoming calculation.
+            Needs to be changed to have the previous number be added.
+        
+            Fix Idea: 
+            Make a new function that passes in an Opp, move this code to said Func.
+            Make Add, Sub, Mult etc. functions save the opperator, then call the new Func. to 
+            Calulate the previous equation that was just done.
+            
+            Testing: 
+            Currently works, will need to test and fix code.
 
-        NumList.Add(currentNum);
-        sum += currentNum;
-        currentNum = 0.0f;
+            BugList:
+            Currently, hitting the same opperation twice without changing the number will cause the calc to run again
+            Fine for Addition and Subtraction as no change when num + 0, however, massive problem with * and / 
+            having a number be * by 0 breaks the equation
+        */
 
         if(NumList.Count < 1)
         {
-            UpdateUI(false);
+            prevOpp = 0;
+            NumList.Add(currentNum);
+            sum += currentNum;
+            currentNum = 0.0f;
+            UpdateUI(true);
             return;
         }
 
+        CalcSum();
+        prevOpp = 0;
         UpdateUI(true);
     }
 
     void SubtractionCalc()
     {
-        NumList.Add(currentNum);
-        sum -= currentNum;
-        currentNum = 0.0f;
-
         if (NumList.Count < 1)
         {
-            UpdateUI(false);
+            prevOpp = 1;
+            NumList.Add(currentNum);
+            sum -= currentNum;
+            currentNum = 0.0f;
+            UpdateUI(true);
             return;
         }
 
+        CalcSum();
+        prevOpp = 1;
         UpdateUI(true);
     }
 
     void MultiplacationCalc()
     {
-        NumList.Add(currentNum);
-        sum *= currentNum;
-        currentNum = 0.0f;
-
         if (NumList.Count < 1)
         {
-            UpdateUI(false);
+            prevOpp = 2;
+            NumList.Add(currentNum);
+            sum *= currentNum;
+            currentNum = 0.0f;
+            UpdateUI(true);
             return;
         }
 
+        CalcSum();
+        prevOpp = 2;
         UpdateUI(true);
     }
 
     void DivisionCalc()
     {
-        NumList.Add(currentNum);
-        sum /= currentNum;
-        currentNum = 0.0f;
-
         if (NumList.Count < 1)
         {
-            UpdateUI(false);
+            prevOpp = 3;
+            NumList.Add(currentNum);
+            sum /= currentNum;
+            currentNum = 0.0f;
+            UpdateUI(true);
             return;
         }
 
+        CalcSum();
+        prevOpp = 3;
         UpdateUI(true);
     }
 
@@ -196,11 +220,61 @@ public class CalculatorManager : MonoBehaviour
     void EqualEquation()
     {
         //TODO Calucate final sum, 1 using left to right Order of Opperation, and 1 using BEDMAS Order of Opperation.
+
+        CalcSum();
+        UpdateUI(true);
+
+        sum = 0.0f;
+        currentNum = 0.0f;
+        NumList.Clear();
     }
 
     void ClearEverything()
     {
         //TODO Clear function.
+    }
+    
+    void CalcSum()
+    {
+        if (prevOpp == -1)
+        {
+            return;
+        }
+
+        NumList.Add(currentNum);
+
+        switch (prevOpp)
+        {
+            case 0: //Addition
+                sum += currentNum;
+                break;
+            case 1: //Subtraction
+                sum -= currentNum;
+                break;
+            case 2: //Multiplication
+                sum *= currentNum;
+                break;
+            case 3: //Division
+                sum /= currentNum;
+                break;
+            case 4: //SquareRoot
+                break;
+            case 5: //Exponent
+                break;
+            case 6: //Percent
+                break;
+            case 7: //Equals
+                break;
+            case 8: //Clear
+
+                break;
+            case 9: //Deciaml
+                //TODO add Decimal calcuations
+                break;
+        }
+
+        currentNum = 0.0f;
+        prevOpp = -1;
     }
 
     void UpdateUI(bool bSum)
