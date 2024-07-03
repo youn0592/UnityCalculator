@@ -1,12 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using UnityEngine.UIElements;
 using System;
-using System.Numerics;
-using System.Diagnostics;
-using UnityEditor.UIElements;
+
 
 [Serializable]
 //Numbers added for UI OnClick
@@ -39,7 +35,10 @@ public class CalculatorManager : MonoBehaviour
     List<ECalcButton> OppList = new List<ECalcButton>();
 
     bool bBEDMAS = false;
+    bool bOppHit = false;           //Bool to tell calculator that an opperation had previous been hit and not to run another calculation 
+
     int prevOpp = -1;
+
 
 
     // Start is called before the first frame update
@@ -96,18 +95,22 @@ public class CalculatorManager : MonoBehaviour
                 DivisionCalc();
                 break;
             case 4: //SquareRoot
+                SqrtCalc();
                 OppList.Add(ECalcButton.SquareRoot);
                 break;
             case 5: //Exponent
                 OppList.Add(ECalcButton.Exponent);
+                ExponentCalc();
                 break;
             case 6: //Percent
+                PercentCalc();
                 OppList.Add(ECalcButton.Percent);
                 break;
             case 7: //Equals
                 EqualEquation();
                 break;
             case 8: //Clear
+                ClearEverything();
                 NumList.Clear();
                 OppList.Clear();
                 break;
@@ -115,6 +118,11 @@ public class CalculatorManager : MonoBehaviour
                 //TODO add Decimal calcuations
                 break;
         }
+    }
+
+    public void RecentOpperationHit(bool bHit)
+    {
+        bOppHit = bHit;
     }
 
     void AdditionCalc()
@@ -136,12 +144,18 @@ public class CalculatorManager : MonoBehaviour
             Fine for Addition and Subtraction as no change when num + 0, however, massive problem with * and / 
             having a number be * by 0 breaks the equation
         */
+        if(bOppHit == true)
+        {
+            prevOpp = 0;
+            UnityEngine.Debug.Log("Addition");
+            return;
+        }
 
         if(NumList.Count < 1)
         {
             prevOpp = 0;
             NumList.Add(currentNum);
-            sum += currentNum;
+            sum = currentNum;
             currentNum = 0.0f;
             UpdateUI(true);
             return;
@@ -154,11 +168,17 @@ public class CalculatorManager : MonoBehaviour
 
     void SubtractionCalc()
     {
+        if (bOppHit == true)
+        {
+            prevOpp = 1;
+            Debug.Log("Subraction");
+            return;
+        }
         if (NumList.Count < 1)
         {
             prevOpp = 1;
             NumList.Add(currentNum);
-            sum -= currentNum;
+            sum = currentNum;
             currentNum = 0.0f;
             UpdateUI(true);
             return;
@@ -171,11 +191,17 @@ public class CalculatorManager : MonoBehaviour
 
     void MultiplacationCalc()
     {
+        if (bOppHit == true)
+        {
+            prevOpp = 2;
+            Debug.Log("Multiplication");
+            return;
+        }
         if (NumList.Count < 1)
         {
             prevOpp = 2;
             NumList.Add(currentNum);
-            sum *= currentNum;
+            sum = currentNum;
             currentNum = 0.0f;
             UpdateUI(true);
             return;
@@ -188,11 +214,17 @@ public class CalculatorManager : MonoBehaviour
 
     void DivisionCalc()
     {
+        if (bOppHit == true)
+        {
+            prevOpp = 3;
+            Debug.Log("Division");
+            return;
+        }
         if (NumList.Count < 1)
         {
             prevOpp = 3;
             NumList.Add(currentNum);
-            sum /= currentNum;
+            sum = currentNum;
             currentNum = 0.0f;
             UpdateUI(true);
             return;
@@ -211,10 +243,43 @@ public class CalculatorManager : MonoBehaviour
     void ExponentCalc()
     {
 
+        // **SOLVED** When adding an exponent, the calculator casues a bug where it just resets to 0.
+
+        if (prevOpp > -1 || NumList.Count < 1)
+        {
+            currentNum *= currentNum;
+            UpdateUI(false);
+            return;
+        }
+
+        sum *= sum;
+        UpdateUI(true);
     }
 
     void PercentCalc()
     {
+        /*  
+         *  TODO - Create Percent calculation
+         *  If its the first number, calculate the percentage of that number to 100 I.E. 50% = 0.5
+         *  If its the second number, calculate the percentage of the previous number I.E. 50 + 50% = 50 + 25.
+         *  If there is a sum, calculate the percentage of the sum I.E. sum = 150 + 50% = 150 + 75.
+         *  
+         *  Known Bugs:
+         *  When running a previous opperate, Percent is overriding and causing a bug.
+         */
+        if(NumList.Count < 1)
+        {
+            currentNum /= 100;
+            NumList.Add(currentNum);
+            sum = currentNum;
+            UpdateUI(true);
+            return;
+        }
+
+        double percentage = 0.0f;
+        percentage = currentNum / 100;
+        currentNum = sum * percentage;
+        UpdateUI(false);
 
     }
     void EqualEquation()
@@ -224,6 +289,8 @@ public class CalculatorManager : MonoBehaviour
         CalcSum();
         UpdateUI(true);
 
+        prevOpp = 0;
+        bOppHit = false;
         sum = 0.0f;
         currentNum = 0.0f;
         NumList.Clear();
@@ -232,11 +299,17 @@ public class CalculatorManager : MonoBehaviour
     void ClearEverything()
     {
         //TODO Clear function.
+        prevOpp = 0;
+        bOppHit = false;
+        sum = 0.0f;
+        currentNum = 0.0f;
+        NumList.Clear();
+        UpdateUI(true);
     }
-    
+   
     void CalcSum()
     {
-        if (prevOpp == -1)
+        if (prevOpp == -1 || bOppHit == true)
         {
             return;
         }
