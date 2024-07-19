@@ -38,6 +38,10 @@ public class CalculatorManager : MonoBehaviour
     //the current decimal number
     double decimalNum = 1.0f;
 
+    //Variables for store previous operations post equals
+    double previousNum = 0.0f;
+
+
     List<double> NumList = new List<double>();
     List<ECalcButton> OppList = new List<ECalcButton>();
 
@@ -45,8 +49,10 @@ public class CalculatorManager : MonoBehaviour
     bool bOppHit = false;           //Bool to tell calc that an opperation had previous been hit and not to run another calculation 
     bool bDecimal = false;          //Bool to tell calc that all numbers after will be after a decimal
     bool bError = false;            //Bool when a calculation goes over Max or under Min
+    bool bSumEquals = false;        //Bool that 
 
     int prevOpp = -1;
+
 
 
 
@@ -273,45 +279,20 @@ public class CalculatorManager : MonoBehaviour
     void SqrtCalc()
     {
 
-        currentNum = Math.Sqrt(currentNum);
+        //currentNum = Math.Sqrt(currentNum);
+        //UpdateUI(false);
+
+        double error = 0.00000001;
+        double s = currentNum;
+
+        while((s - currentNum / s) > error)
+        {
+            s = (s + currentNum / s) / 2;
+        }
+
+        
+        currentNum = Math.Round(s, 5);
         UpdateUI(false);
-
-        //if(currentNum == 0 || currentNum == 1)
-        //{
-        //    sum = currentNum;
-        //    UpdateUI(true);
-        //    return;
-        //}
-        //if(currentNum < 0)
-        //{
-        //    ErrorUI();
-        //    return;
-        //}
-        ////Square Root calculation is determining the lowest number that can be an exponent. I.E. the SR of 9 is 3 since 3 x 3 = 9.
-        ////Bug - Number seems to be slightly off by a few decimals
-        //double left = 1, right, mid = 0.0f, res = 0.0f;
-        //right = currentNum;
-
-        //while (left < right)
-        //{
-        //    mid = left + ((right - left) / 2);
-        //    if (mid * mid > currentNum)
-        //    {
-        //        right = mid - 0.01;
-        //    }
-        //    else if (mid * mid < currentNum)
-        //    {
-        //        left = mid + 0.01;
-        //        res = mid;
-        //    }
-        //    else
-        //    {
-        //        res = mid;
-        //        break;
-        //    }
-        //}
-        //sum = res;
-        //UpdateUI(true);
     }
 
     void ExponentCalc()
@@ -376,11 +357,11 @@ public class CalculatorManager : MonoBehaviour
         CalcSum();
         UpdateUI(true);
 
-        prevOpp = 0;
-        bOppHit = false;
-        sum = 0.0f;
-        currentNum = 0.0f;
-        NumList.Clear();
+        //prevOpp = 0;
+        //bOppHit = false;
+        //sum = 0.0f;
+        //currentNum = 0.0f;
+        //NumList.Clear();
     }
 
     void ClearEverything()
@@ -440,8 +421,8 @@ public class CalculatorManager : MonoBehaviour
             bError = true;
             ErrorUI();
         }
-        currentNum = 0.0f;
-        prevOpp = -1;
+        //currentNum = 0.0f;
+        //prevOpp = -1;
     }
 
     void UpdateUI(bool bSum)
