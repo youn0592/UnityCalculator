@@ -1,0 +1,3 @@
+BUGLIST: 
+
+**SOVLED** Decimal opperation no longer working as intended.

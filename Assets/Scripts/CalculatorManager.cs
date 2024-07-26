@@ -5,6 +5,10 @@ using System;
 using Unity.VisualScripting;
 
 
+/*TODO LIST
+ * Fix Equals function allowing user to keep hitting equals to continue doing the previous calculation
+*/
+
 [Serializable]
 //Numbers added for UI OnClick
 public enum ECalcButton
@@ -49,7 +53,7 @@ public class CalculatorManager : MonoBehaviour
     bool bOppHit = false;           //Bool to tell calc that an opperation had previous been hit and not to run another calculation 
     bool bDecimal = false;          //Bool to tell calc that all numbers after will be after a decimal
     bool bError = false;            //Bool when a calculation goes over Max or under Min
-    bool bSumEquals = false;        //Bool that 
+    bool bSumEquals = false;        
 
     int prevOpp = -1;
 
@@ -72,20 +76,24 @@ public class CalculatorManager : MonoBehaviour
     public void InputValue(int num)
     {
         //Known bug, hitting decimal while current number is 0 causes the number to break
-        if((currentNum >= MAXDOB || currentNum <= MINDOB || bError) && currentNum != 0)
+        if((currentNum >= MAXDOB || currentNum <= MINDOB || bError) && currentNum != 0) return;
+        if (currentNum == 0 && num == 0) return;
+        //if the sum has been calulated, reset the current number and update the UI
+        if(bSumEquals == true)
         {
-            return;
+            currentNum = 0.0f;
+            bSumEquals = false;
+            UpdateUI(false);
         }
-        if (currentNum == 0 && num == 0)
-        {
-            return;
-        }
+        
         if (bDecimal == true)
         {
             decimalNum /= 10;
             double cal = num;
             cal *= decimalNum;
             currentNum += cal;
+            UpdateUI(false);
+            return;
             //currentNum = cal;
         }
         if (currentNum == 0)
@@ -113,34 +121,49 @@ public class CalculatorManager : MonoBehaviour
             case 0: //Addition
                 OppList.Add(ECalcButton.Addition);
                 AdditionCalc();
+                decimalNum = 1;
+                bDecimal = false;
                 break;
             case 1: //Subtraction
                 OppList.Add(ECalcButton.Subtraction);
                 SubtractionCalc();
+                decimalNum = 1;
+                bDecimal = false;
                 break;
             case 2: //Multiplication
                 OppList.Add(ECalcButton.Multiplication);
                 MultiplacationCalc();
+                decimalNum = 1;
+                bDecimal = false;
                 break;
             case 3: //Division
                 OppList.Add(ECalcButton.Division);
                 DivisionCalc();
+                decimalNum = 1;
+                bDecimal = false;
                 break;
             case 4: //SquareRoot
                 SqrtCalc();
                 OppList.Add(ECalcButton.SquareRoot);
-                Math.Sqrt(25);
+                decimalNum = 1;
+                bDecimal = false;
                 break;
             case 5: //Exponent
                 OppList.Add(ECalcButton.Exponent);
                 ExponentCalc();
+                decimalNum = 1;
+                bDecimal = false;
                 break;
             case 6: //Percent
                 PercentCalc();
                 OppList.Add(ECalcButton.Percent);
+                decimalNum = 1;
+                bDecimal = false;
                 break;
             case 7: //Equals
                 EqualEquation();
+                decimalNum = 1;
+                bDecimal = false;
                 break;
             case 8: //Clear
                 ClearEverything();
@@ -148,7 +171,6 @@ public class CalculatorManager : MonoBehaviour
                 OppList.Clear();
                 break;
             case 9: //Deciaml
-                //TODO add Decimal calcuations
                 bDecimal = true;
                 break;
             case 10: //Plus Minus
@@ -159,6 +181,7 @@ public class CalculatorManager : MonoBehaviour
                 Debug.LogAssertion("Number Outside of Range");
                 break;
         }
+
     }
 
     public void RecentOpperationHit(bool bHit)
@@ -185,7 +208,7 @@ public class CalculatorManager : MonoBehaviour
             Fine for Addition and Subtraction as no change when num + 0, however, massive problem with * and / 
             having a number be * by 0 breaks the equation
         */
-        if (bOppHit == true)
+        if (bOppHit == true || bSumEquals)
         {
             prevOpp = 0;
             UnityEngine.Debug.Log("Addition");
@@ -209,7 +232,7 @@ public class CalculatorManager : MonoBehaviour
 
     void SubtractionCalc()
     {
-        if (bOppHit == true)
+        if (bOppHit == true || bSumEquals)
         {
             prevOpp = 1;
             Debug.Log("Subraction");
@@ -232,7 +255,7 @@ public class CalculatorManager : MonoBehaviour
 
     void MultiplacationCalc()
     {
-        if (bOppHit == true)
+        if (bOppHit == true || bSumEquals)
         {
             prevOpp = 2;
             Debug.Log("Multiplication");
@@ -255,7 +278,7 @@ public class CalculatorManager : MonoBehaviour
 
     void DivisionCalc()
     {
-        if (bOppHit == true)
+        if (bOppHit == true || bSumEquals)
         {
             prevOpp = 3;
             Debug.Log("Division");
@@ -278,19 +301,16 @@ public class CalculatorManager : MonoBehaviour
 
     void SqrtCalc()
     {
-
-        //currentNum = Math.Sqrt(currentNum);
-        //UpdateUI(false);
-
         double error = 0.00000001;
-        double s = currentNum;
-
-        while((s - currentNum / s) > error)
+        double s, num;
+        if (bSumEquals) { s = sum; num = sum; }
+        else { s = currentNum; num = currentNum; }
+        while((s - num / s) > error)
         {
-            s = (s + currentNum / s) / 2;
+            s = (s + num / s) / 2;
         }
 
-        
+        //Square Root number often ends in falling decimal points, this rounds it to the 5th decimal for a cleaner display.
         currentNum = Math.Round(s, 5);
         UpdateUI(false);
     }
@@ -314,13 +334,8 @@ public class CalculatorManager : MonoBehaviour
     void PercentCalc()
     {
         /*  
-         *  TODO - Create Percent calculation
-         *  If its the first number, calculate the percentage of that number to 100 I.E. 50% = 0.5
-         *  If its the second number, calculate the percentage of the previous number I.E. 50 + 50% = 50 + 25.
-         *  If there is a sum, calculate the percentage of the sum I.E. sum = 150 + 50% = 150 + 75.
-         *  
          *  Known Bugs:
-         *  When running a previous opperate, Percent is overriding and causing a bug.
+         *  When running a previous opperate, Percent is overriding and causing a bug. - never wrote down if this was solved, will check
          */
         if (NumList.Count < 1)
         {
@@ -352,11 +367,12 @@ public class CalculatorManager : MonoBehaviour
     }
     void EqualEquation()
     {
-        //TODO Calucate final sum, 1 using left to right Order of Opperation, and 1 using BEDMAS Order of Opperation.
 
+        bSumEquals = true;
         CalcSum();
         UpdateUI(true);
 
+        //Temp Code for clearing everything after an opperation, still a work in progress
         //prevOpp = 0;
         //bOppHit = false;
         //sum = 0.0f;
@@ -366,10 +382,11 @@ public class CalculatorManager : MonoBehaviour
 
     void ClearEverything()
     {
-        //TODO Clear function.
         prevOpp = 0;
         bOppHit = false;
         bError = false;
+        bDecimal = false;
+        decimalNum = 1;
         sum = 0.0f;
         currentNum = 0.0f;
         NumList.Clear();
@@ -378,14 +395,12 @@ public class CalculatorManager : MonoBehaviour
 
     void CalcSum()
     {
-
-        if (prevOpp == -1 || bOppHit == true)
-        {
-            return;
-        }
+        //If the previous Opperation is -1 (null) or the bool saying that a previous Opperatoin has been hit, return.
+        if (prevOpp == -1 || bOppHit == true) return;
 
         NumList.Add(currentNum);
 
+        //Switch case to calculate opperations.
         switch (prevOpp)
         {
             case 0: //Addition
@@ -416,13 +431,13 @@ public class CalculatorManager : MonoBehaviour
                 break;
 
         }
+
+        //if the sum goes over the max number or the min number, display an error.
         if ((sum >= MAXDOB || sum <= MINDOB))
         {
             bError = true;
             ErrorUI();
         }
-        //currentNum = 0.0f;
-        //prevOpp = -1;
     }
 
     void UpdateUI(bool bSum)
@@ -431,12 +446,14 @@ public class CalculatorManager : MonoBehaviour
         {
             return;
         }
+
+        //if the sum is being calculated, only display the sum.
         if (bSum)
         {
             outputText.text = sum.ToString();
             return;
         }
-
+        //if the sum isn't being calculated, only display the current number.
         outputText.text = currentNum.ToString();
     }
 

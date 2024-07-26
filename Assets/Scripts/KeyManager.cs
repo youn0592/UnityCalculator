@@ -1,24 +1,54 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class KeyManager : MonoBehaviour
 {
+    CalculatorManager CalcManager;
 
-    /*  This class will allow for the user to type using their the numpad or numbers on their keyboard
-        to be able to type in numbers, also to allow users to activate the operations using the keybinds
-        on the keyboard.
-     */
+    int opp = -1;
+    int num = -1;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        
+        CalcManager = GetComponent<CalculatorManager>();
+
+        if(CalcManager == null)
+        {
+            Debug.LogError("CALCULATOR MANAGER IS NULL!");
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    public void OnGetNumber(InputAction.CallbackContext context)
     {
-        
+        if (context.performed)
+        {
+            num = (int)context.ReadValue<float>();
+            InputNum();
+        }
     }
+
+    public void OnGetOpperation(InputAction.CallbackContext context)
+    {
+        if(context.performed)
+        {
+            opp = (int)context.ReadValue<float>();
+            InputOpp();
+        }
+    }
+
+    void InputNum()
+    {
+        if (num == 0) return; //When a key is let go, it reset its scale to 0 causing this function to hit
+        if (num == 10) num = 0; //The 0 key is set to 10, this resets it to 0 for the Manager code.
+        CalcManager.InputValue(num);
+    }
+
+    void InputOpp()
+    {
+        if (opp == 0) return; //When a key is let go, it reset its scale to 0 causing this function to hit
+        if (opp == 10) opp = 0; // The Addition key is set to 10, this resets it to 0 for Manager code.
+        CalcManager.InputOpperation(opp);
+    }    
 }
