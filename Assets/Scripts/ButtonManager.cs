@@ -48,6 +48,9 @@ public class ButtonManager : MonoBehaviour
             case 9:
                 CalcManager.InputOpperation(opp);
                 return;
+            case 10:
+                CalcManager.InputOpperation(opp);
+                return;
         }
         OppHit = true;
         CalcManager.InputOpperation(opp);

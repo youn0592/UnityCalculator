@@ -1,3 +1,16 @@
 BUGLIST: 
 
-**SOVLED** Decimal opperation no longer working as intended.
+
+TESTING:
+
+
+SOLVED BUGS:
+
+*** Current Number is not Resetting after hitting an operation.
+*** When running a previous opperate, Percent is overriding and causing a bug.
+*** Hitting decimal while current number is 0 causes the number to break
+*** When adding an exponent, the calculator casues a bug where it just resets to 0.
+*** Decimal opperation no longer working as intended.
+*** Currently, hitting the same opperation twice without changing the number will cause the calc to run again
+	Fine for Addition and Subtraction as no change when num + 0, however, massive problem with * and / 
+	having a number be * by 0 breaks the equation

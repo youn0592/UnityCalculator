@@ -6,7 +6,6 @@ using Unity.VisualScripting;
 
 
 /*TODO LIST
- * Fix Equals function allowing user to keep hitting equals to continue doing the previous calculation
 */
 
 [Serializable]
@@ -28,22 +27,17 @@ public enum ECalcButton
 public class CalculatorManager : MonoBehaviour
 {
     [SerializeField]
-    GameObject outputObj;
+    GameObject outputObj;           //The Unity Object in Inspector which allows outputText to be castable in Start
 
-    TextMeshProUGUI outputText;
+    TextMeshProUGUI outputText;     //Unity Object of text to allow for modification of text within code, is casted in Start()
 
-    static double MAXDOB = 100000000000000;
-    static double MINDOB = -10000000000000;
+    static double MAXDOB = 100000000000000;     //Max number of Double to stop overflow.
+    static double MINDOB = -10000000000000;     //Min Number of Double to stop overflow.
 
-    //the Current Number being inputed
-    double currentNum = 0.0f;
-    //The current sum being calcuated.
-    double sum = 0.0f;
-    //the current decimal number
-    double decimalNum = 1.0f;
 
-    //Variables for store previous operations post equals
-    double previousNum = 0.0f;
+    double currentNum = 0.0f;   //the Current Number being inputed
+    double sum = 0.0f;          //The current sum being calcuated.
+    double decimalNum = 1.0f;   //the current decimal number
 
 
     List<double> NumList = new List<double>();
@@ -53,9 +47,9 @@ public class CalculatorManager : MonoBehaviour
     bool bOppHit = false;           //Bool to tell calc that an opperation had previous been hit and not to run another calculation 
     bool bDecimal = false;          //Bool to tell calc that all numbers after will be after a decimal
     bool bError = false;            //Bool when a calculation goes over Max or under Min
-    bool bSumEquals = false;        
+    bool bSumEquals = false;        //Bool that switches during Equals allowing user to hit and redo previous calculaiton. Turns false once the user inputs a new number.
 
-    int prevOpp = -1;
+    int prevOpp = -1;               //Int that keeps track of which opperation has been hit, check Input Opperation for number translation.
 
 
 
@@ -63,30 +57,33 @@ public class CalculatorManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        if (outputObj == null)
-        {
-            UnityEngine.Debug.LogError("OUTPUT OBJECT IS NULL IN CALCULATOR MANAGER!");
-        }
+        if (outputObj == null)  Debug.LogError("OUTPUT OBJECT IS NULL IN CALCULATOR MANAGER!");
+  
 
         outputText = outputObj.GetComponent<TextMeshProUGUI>();
+
+        if(outputText == null)  Debug.LogError("OUTPUT TEXT IS NULL IN CALCULATOR MANAGER");
+
+
         outputText.text = sum.ToString();
 
     }
 
     public void InputValue(int num)
     {
-        //Known bug, hitting decimal while current number is 0 causes the number to break
+        //Checkers to make sure the user isn't overflowing a double and that the user hasn't isn't 0 when the number is already 0
         if((currentNum >= MAXDOB || currentNum <= MINDOB || bError) && currentNum != 0) return;
         if (currentNum == 0 && num == 0) return;
-        //if the sum has been calulated, reset the current number and update the UI
-        if(bSumEquals == true)
+
+       
+        if(bSumEquals == true)  //if the sum has been calulated, and the user wants to input a new number, reset the current number and update the UI
         {
             currentNum = 0.0f;
             bSumEquals = false;
             UpdateUI(false);
         }
         
-        if (bDecimal == true)
+        if (bDecimal == true) //If the decimal opperator has been hit, this number will now only add deciaml points by dividing a number by 10 (that starts as 1) and adding it to the current number.
         {
             decimalNum /= 10;
             double cal = num;
@@ -94,9 +91,8 @@ public class CalculatorManager : MonoBehaviour
             currentNum += cal;
             UpdateUI(false);
             return;
-            //currentNum = cal;
         }
-        if (currentNum == 0)
+        if (currentNum == 0)    //A checker to check if this is the first number, as some opperations can cause the start number to be 0 causing anything to be times or divided by 0 causing errors.
         {
             currentNum += num;
             UpdateUI(false);
@@ -121,32 +117,22 @@ public class CalculatorManager : MonoBehaviour
             case 0: //Addition
                 OppList.Add(ECalcButton.Addition);
                 AdditionCalc();
-                decimalNum = 1;
-                bDecimal = false;
                 break;
             case 1: //Subtraction
                 OppList.Add(ECalcButton.Subtraction);
                 SubtractionCalc();
-                decimalNum = 1;
-                bDecimal = false;
                 break;
             case 2: //Multiplication
                 OppList.Add(ECalcButton.Multiplication);
                 MultiplacationCalc();
-                decimalNum = 1;
-                bDecimal = false;
                 break;
             case 3: //Division
                 OppList.Add(ECalcButton.Division);
                 DivisionCalc();
-                decimalNum = 1;
-                bDecimal = false;
                 break;
             case 4: //SquareRoot
                 SqrtCalc();
                 OppList.Add(ECalcButton.SquareRoot);
-                decimalNum = 1;
-                bDecimal = false;
                 break;
             case 5: //Exponent
                 OppList.Add(ECalcButton.Exponent);
@@ -191,23 +177,6 @@ public class CalculatorManager : MonoBehaviour
 
     void AdditionCalc()
     {
-        /*
-            Works, however needs to be changed, is current working on the upcoming calculation.
-            Needs to be changed to have the previous number be added.
-        
-            Fix Idea: 
-            Make a new function that passes in an Opp, move this code to said Func.
-            Make Add, Sub, Mult etc. functions save the opperator, then call the new Func. to 
-            Calulate the previous equation that was just done.
-            
-            Testing: 
-            Currently works, will need to test and fix code.
-
-            BugList:
-           **SOLVED** Currently, hitting the same opperation twice without changing the number will cause the calc to run again
-            Fine for Addition and Subtraction as no change when num + 0, however, massive problem with * and / 
-            having a number be * by 0 breaks the equation
-        */
         if (bOppHit == true || bSumEquals)
         {
             prevOpp = 0;
@@ -317,9 +286,6 @@ public class CalculatorManager : MonoBehaviour
 
     void ExponentCalc()
     {
-
-        // **SOLVED** When adding an exponent, the calculator casues a bug where it just resets to 0.
-
         if (prevOpp > -1 || NumList.Count < 1)
         {
             currentNum *= currentNum;
@@ -333,10 +299,6 @@ public class CalculatorManager : MonoBehaviour
 
     void PercentCalc()
     {
-        /*  
-         *  Known Bugs:
-         *  When running a previous opperate, Percent is overriding and causing a bug. - never wrote down if this was solved, will check
-         */
         if (NumList.Count < 1)
         {
             currentNum /= 100;
@@ -365,6 +327,7 @@ public class CalculatorManager : MonoBehaviour
         sum *= -1;
         UpdateUI(true);
     }
+
     void EqualEquation()
     {
 
@@ -386,6 +349,7 @@ public class CalculatorManager : MonoBehaviour
         bOppHit = false;
         bError = false;
         bDecimal = false;
+        bSumEquals = false;
         decimalNum = 1;
         sum = 0.0f;
         currentNum = 0.0f;
@@ -431,6 +395,10 @@ public class CalculatorManager : MonoBehaviour
                 break;
 
         }
+
+        decimalNum = 1;
+        bDecimal = false;
+        if(bSumEquals != true) currentNum = 0.0f;
 
         //if the sum goes over the max number or the min number, display an error.
         if ((sum >= MAXDOB || sum <= MINDOB))
